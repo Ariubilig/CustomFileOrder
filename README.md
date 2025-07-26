@@ -24,4 +24,5 @@ A powerful VS Code extension that allows you to customize the ordering of files 
 }
 ```
 ## 📄 License
-MIT
+This project is open source and available under the [MIT License](./LICENSE).
+And am not enough for building a Extension so i keep it open source :>
