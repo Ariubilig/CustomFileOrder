@@ -22,3 +22,6 @@ A powerful VS Code extension that allows you to customize the ordering of files 
     }
   }
 }
+
+## 📄 License
+MIT

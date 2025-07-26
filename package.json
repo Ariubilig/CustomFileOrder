@@ -6,7 +6,7 @@
   "publisher": "your-publisher-name",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/custom-file-order"
+    "url": "https://github.com/Ariubilig/custom-file-order"
   },
   "engines": {
     "vscode": "^1.74.0"
@@ -25,6 +25,7 @@
   "activationEvents": [
     "onStartupFinished"
   ],
+  "license": "MIT",
   "main": "./out/extension.js",
   "contributes": {
     "views": {
