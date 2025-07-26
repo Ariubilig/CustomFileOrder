@@ -74,6 +74,14 @@
         "command": "customFileOrder.openConfig",
         "title": "Open Configuration Panel",
         "icon": "$(settings-gear)"
+      },
+      {
+      "command": "customFileOrder.applyTemplate",
+      "title": "Apply Project Template"
+      },
+      {
+        "command": "customFileOrder.createCustomTemplate",
+        "title": "Create Custom Template"
       }
     ],
     "menus": {
@@ -87,6 +95,11 @@
           "command": "customFileOrder.openConfig",
           "when": "view == customFileOrder",
           "group": "navigation@2"
+        },
+        {
+        "command": "customFileOrder.applyTemplate",
+        "when": "view == customFileOrder",
+        "group": "1_templates@1"
         }
       ],
       "view/item/context": [
@@ -153,6 +166,14 @@
         {
           "command": "customFileOrder.resetOrder",
           "when": "false"
+        },
+        {
+        "command": "customFileOrder.applyTemplate",
+        "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "customFileOrder.createCustomTemplate",
+          "when": "workspaceFolderCount > 0"
         }
       ]
     },
