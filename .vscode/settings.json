@@ -7,5 +7,28 @@
 		"out": true // set this to false to include "out" folder in search results
 	},
 	// Turn off tsc task auto detection since we have the necessary tasks as npm scripts
-	"typescript.tsc.autoDetect": "off"
+	"typescript.tsc.autoDetect": "off",
+	"customFileOrder.rules": {
+		"c:\\vs\\CustomFileOrder-extension\\custom-file-order": {
+			"order": [
+				".vscode",
+				"src",
+				".eslintrc.json",
+				".gitignore",
+				".vscodeignore",
+				".vscode-test.mjs",
+				"CHANGELOG.md",
+				"custom-file-order-0.0.2.vsix",
+				"eslint.config.mjs",
+				"icon.png",
+				"LICENSE",
+				"package-lock.json",
+				"package.json",
+				"README.md",
+				"tsconfig.json",
+				"vsc-extension-quickstart.md"
+			],
+			"type": "manual"
+		}
+	}
 }
