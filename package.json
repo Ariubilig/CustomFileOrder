@@ -34,7 +34,8 @@
           "name": "Custom File Order",
           "when": "workspaceFolderCount > 0",
           "canMoveViews": true,
-          "canSelectMany": false
+          "canSelectMany": false,
+          "icon": "icon.png"
         }
       ]
     },
