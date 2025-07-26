@@ -1,0 +1,218 @@
+{
+  "name": "custom-file-order",
+  "displayName": "Custom File Order",
+  "description": "Custom file and folder ordering in explorer with drag & drop support",
+  "version": "0.0.1",
+  "publisher": "your-publisher-name",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/custom-file-order"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "file",
+    "folder",
+    "order",
+    "sort",
+    "explorer",
+    "organization"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "customFileOrder",
+          "name": "Custom File Order",
+          "when": "workspaceFolderCount > 0",
+          "canMoveViews": true,
+          "canSelectMany": false
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "customFileOrder.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "customFileOrder.openFile",
+        "title": "Open File"
+      },
+      {
+        "command": "customFileOrder.revealInExplorer",
+        "title": "Reveal in File Explorer"
+      },
+      {
+        "command": "customFileOrder.moveUp",
+        "title": "Move Up",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "customFileOrder.moveDown",
+        "title": "Move Down",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "customFileOrder.setCustomOrder",
+        "title": "Set Custom Order for This Folder"
+      },
+      {
+        "command": "customFileOrder.resetOrder",
+        "title": "Reset to Default Order"
+      },
+      {
+        "command": "customFileOrder.openConfig",
+        "title": "Open Configuration Panel",
+        "icon": "$(settings-gear)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "customFileOrder.refresh",
+          "when": "view == customFileOrder",
+          "group": "navigation@1"
+        },
+        {
+          "command": "customFileOrder.openConfig",
+          "when": "view == customFileOrder",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "customFileOrder.revealInExplorer",
+          "when": "view == customFileOrder",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "customFileOrder.moveUp",
+          "when": "view == customFileOrder",
+          "group": "2_reorder@1"
+        },
+        {
+          "command": "customFileOrder.moveDown",
+          "when": "view == customFileOrder",
+          "group": "2_reorder@2"
+        },
+        {
+          "command": "customFileOrder.setCustomOrder",
+          "when": "view == customFileOrder && viewItem == folder-custom",
+          "group": "3_folder@1"
+        },
+        {
+          "command": "customFileOrder.setCustomOrder",
+          "when": "view == customFileOrder && viewItem == folder",
+          "group": "3_folder@1"
+        },
+        {
+          "command": "customFileOrder.resetOrder",
+          "when": "view == customFileOrder && viewItem == folder-custom",
+          "group": "3_folder@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "customFileOrder.refresh",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "customFileOrder.openConfig",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "customFileOrder.openFile",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.revealInExplorer",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.moveUp",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.moveDown",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.setCustomOrder",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.resetOrder",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Custom File Order",
+      "properties": {
+        "customFileOrder.rules": {
+          "type": "object",
+          "default": {},
+          "description": "Custom ordering rules for files and folders",
+          "markdownDescription": "Define custom ordering rules for specific folders. Example:\n```json\n{\n  \"src\": {\n    \"order\": [\"App.jsx\", \"components\", \"hooks\", \"pages\"],\n    \"type\": \"manual\"\n  }\n}\n```"
+        },
+        "customFileOrder.enableAutoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically refresh the tree when files change"
+        },
+        "customFileOrder.showCustomOrderIndicator": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show visual indicator for folders with custom ordering"
+        },
+        "customFileOrder.defaultFoldersFirst": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show folders before files when no custom order is set"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "typescript": "^4.9.4",
+    "@vscode/test-electron": "^2.2.0"
+  },
+  "dependencies": {},
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "badges": [
+    {
+      "url": "https://img.shields.io/badge/VS%20Code-Extension-blue",
+      "href": "https://marketplace.visualstudio.com/items?itemName=your-publisher-name.custom-file-order",
+      "description": "VS Code Extension"
+    }
+  ]
+}
