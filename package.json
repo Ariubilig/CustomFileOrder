@@ -2,7 +2,7 @@
   "name": "custom-file-order",
   "displayName": "Custom File Order",
   "description": "Custom file and folder ordering in explorer with drag & drop support",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "publisher": "RARI",
   "repository": {
     "type": "git",
