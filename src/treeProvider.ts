@@ -11,6 +11,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
     private configManager: ConfigManager;
     private workspaceRoot: string;
     private treeView: vscode.TreeView<FileItem> | undefined;
+    private clipboard: { uris: vscode.Uri[]; isCut: boolean } | null = null;
 
     constructor(workspaceRoot: string) {
         this.workspaceRoot = workspaceRoot;
@@ -30,7 +31,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         return element;
     }
 
-    getChildren(element?: FileItem): Thenable<FileItem[]> {
+    getChildren(element?: FileItem): Promise<FileItem[]> {
         if (!this.workspaceRoot) {
             vscode.window.showInformationMessage('No workspace folder');
             return Promise.resolve([]);
@@ -50,7 +51,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
             const entries = fs.readdirSync(folderPath, { withFileTypes: true });
 
             // Filter out hidden files and system files unless explicitly shown
-            const filteredEntries = entries.filter(entry => {
+            const filteredEntries = entries.filter((entry: fs.Dirent) => {
                 // Skip hidden files starting with . (except .vscode, .env, etc.)
                 if (entry.name.startsWith('.')) {
                     const allowedHidden = ['.vscode', '.env', '.gitignore', '.gitattributes', '.prettierrc', '.eslintrc'];
@@ -70,7 +71,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
             });
 
             // Convert entries to FileItems
-            filteredEntries.forEach(entry => {
+            filteredEntries.forEach((entry: fs.Dirent) => {
                 const fullPath = path.join(folderPath, entry.name);
                 const isDirectory = entry.isDirectory();
                 
@@ -98,7 +99,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
 
             return orderedItems;
         } catch (error) {
-            console.error(`Error reading directory ${folderPath}:`, error);
+            vscode.window.showErrorMessage(`Error reading directory ${folderPath}: ${String(error)}`);
             return [];
         }
     }
@@ -123,8 +124,8 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         const remainingItems = [...items];
 
         // First, add items in custom order
-        customOrder.forEach(orderName => {
-            const index = remainingItems.findIndex(item => {
+        customOrder.forEach((orderName: string) => {
+            const index = remainingItems.findIndex((item: FileItem) => {
                 // Support both exact match and glob-like patterns
                 if (orderName.includes('*')) {
                     return this.matchesPattern(item.fileName, orderName);
@@ -138,7 +139,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         });
 
         // Then add remaining items (folders first if enabled, then alphabetical)
-        const sortedRemaining = remainingItems.sort((a, b) => {
+        const sortedRemaining = remainingItems.sort((a: FileItem, b: FileItem) => {
             if (defaultFoldersFirst) {
                 if (a.isDirectory && !b.isDirectory) return -1;
                 if (!a.isDirectory && b.isDirectory) return 1;
@@ -167,7 +168,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         try {
             const parentItem = new FileItem('', item.parentPath, vscode.TreeItemCollapsibleState.Expanded, true);
             const siblings = await this.getChildren(parentItem);
-            const currentIndex = siblings.findIndex(sibling => sibling.fileName === item.fileName);
+            const currentIndex = siblings.findIndex((sibling: FileItem) => sibling.fileName === item.fileName);
             
             if (currentIndex <= 0) {
                 vscode.window.showInformationMessage('Item is already at the top');
@@ -175,7 +176,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
             }
             
             // Create new order array
-            const newOrder = siblings.map(s => s.fileName);
+            const newOrder = siblings.map((s: FileItem) => s.fileName);
             [newOrder[currentIndex], newOrder[currentIndex - 1]] = [newOrder[currentIndex - 1], newOrder[currentIndex]];
             
             await this.configManager.setOrderForFolder(item.parentPath, newOrder);
@@ -196,7 +197,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         try {
             const parentItem = new FileItem('', item.parentPath, vscode.TreeItemCollapsibleState.Expanded, true);
             const siblings = await this.getChildren(parentItem);
-            const currentIndex = siblings.findIndex(sibling => sibling.fileName === item.fileName);
+            const currentIndex = siblings.findIndex((sibling: FileItem) => sibling.fileName === item.fileName);
             
             if (currentIndex === -1 || currentIndex >= siblings.length - 1) {
                 vscode.window.showInformationMessage('Item is already at the bottom');
@@ -204,7 +205,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
             }
             
             // Create new order array
-            const newOrder = siblings.map(s => s.fileName);
+            const newOrder = siblings.map((s: FileItem) => s.fileName);
             [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
             
             await this.configManager.setOrderForFolder(item.parentPath, newOrder);
@@ -224,7 +225,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         
         try {
             const children = await this.getChildren(folderItem);
-            const currentOrder = children.map(child => child.fileName);
+            const currentOrder = children.map((child: FileItem) => child.fileName);
             
             const result = await vscode.window.showQuickPick(
                 [
@@ -274,7 +275,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
                     vscode.window.showInformationMessage(
                         'Use right-click "Move Up" or "Move Down" commands to reorder items, or open the Configuration Panel for drag & drop.',
                         'Open Config Panel'
-                    ).then(selection => {
+                    ).then((selection: string | undefined) => {
                         if (selection === 'Open Config Panel') {
                             vscode.commands.executeCommand('customFileOrder.openConfig');
                         }
@@ -292,7 +293,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
             value: currentOrder.join(', '),
             placeHolder: 'App.jsx, components, hooks, pages',
             ignoreFocusOut: true,
-            validateInput: (value) => {
+            validateInput: (value: string) => {
                 if (!value.trim()) {
                     return 'Please enter at least one item';
                 }
@@ -300,8 +301,8 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
             }
         });
 
-        if (orderInput) {
-            const newOrder = orderInput.split(',').map(s => s.trim()).filter(s => s);
+		if (orderInput) {
+			const newOrder = orderInput.split(',').map((s: string) => s.trim()).filter((s: string) => s);
             await this.configManager.setOrderForFolder(folderItem.filePath, newOrder);
             this.refresh();
             vscode.window.showInformationMessage(`Custom order set for "${folderItem.fileName}"`);
@@ -323,9 +324,9 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
 
         if (selectedTemplate) {
             const folderName = path.basename(folderItem.filePath);
-            const templateRule = selectedTemplate.template.rules[folderName] || 
-                                selectedTemplate.template.rules['.'] ||
-                                Object.values(selectedTemplate.template.rules)[0];
+            const templateRule = (selectedTemplate.template.rules as any)[folderName] || 
+                                (selectedTemplate.template.rules as any)['.'] ||
+                                (Object.values(selectedTemplate.template.rules as any)[0] as any);
 
             if (templateRule) {
                 await this.configManager.setOrderForFolder(folderItem.filePath, templateRule.order);
@@ -488,7 +489,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
             const entries = fs.readdirSync(folderPath, { withFileTypes: true });
             let count = entries.length;
             
-            entries.forEach(entry => {
+            entries.forEach((entry: fs.Dirent) => {
                 if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
                     count += this.countItemsRecursively(path.join(folderPath, entry.name), depth + 1);
                 }
@@ -498,5 +499,195 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         } catch {
             return 0;
         }
+    }
+
+    // File operations
+    async createFile(target?: FileItem): Promise<void> {
+        const baseFolder = target && target.isDirectory ? target.filePath : (target ? target.parentPath || this.workspaceRoot : this.workspaceRoot);
+        const name = await vscode.window.showInputBox({ prompt: 'New file name', placeHolder: 'example.ts' });
+        if (!name) return;
+        const newUri = vscode.Uri.file(path.join(baseFolder, name));
+        try {
+            await vscode.workspace.fs.writeFile(newUri, new Uint8Array());
+            await this.updateOrderOnCreate(baseFolder, name);
+            this.refresh();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to create file: ${error}`);
+        }
+    }
+
+    async createFolder(target?: FileItem): Promise<void> {
+        const baseFolder = target && target.isDirectory ? target.filePath : (target ? target.parentPath || this.workspaceRoot : this.workspaceRoot);
+        const name = await vscode.window.showInputBox({ prompt: 'New folder name', placeHolder: 'new-folder' });
+        if (!name) return;
+        const newUri = vscode.Uri.file(path.join(baseFolder, name));
+        try {
+            await vscode.workspace.fs.createDirectory(newUri);
+            await this.updateOrderOnCreate(baseFolder, name);
+            this.refresh();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to create folder: ${error}`);
+        }
+    }
+
+    async renameItem(item: FileItem): Promise<void> {
+        const newName = await vscode.window.showInputBox({ prompt: 'Rename', value: item.fileName });
+        if (!newName || newName === item.fileName) return;
+        const newUri = vscode.Uri.file(path.join(item.parentPath || this.workspaceRoot, newName));
+        try {
+            await vscode.workspace.fs.rename(item.resourceUri!, newUri, { overwrite: false });
+            await this.updateOrderOnRename(item.parentPath || this.workspaceRoot, item.fileName, newName);
+            this.refresh();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to rename: ${error}`);
+        }
+    }
+
+    async deleteItems(items: readonly FileItem[]): Promise<void> {
+        if (items.length === 0) return;
+        const label = items.length === 1 ? items[0].fileName : `${items.length} items`;
+        const confirm = await vscode.window.showWarningMessage(`Delete ${label}?`, { modal: true }, 'Delete');
+        if (confirm !== 'Delete') return;
+        try {
+            for (const item of items) {
+                await vscode.workspace.fs.delete(item.resourceUri!, { recursive: true, useTrash: true });
+                await this.updateOrderOnDelete(item.parentPath || this.workspaceRoot, item.fileName);
+            }
+            this.refresh();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to delete: ${error}`);
+        }
+    }
+
+    async duplicateItems(items: readonly FileItem[]): Promise<void> {
+        for (const item of items) {
+            const destDir = item.parentPath || this.workspaceRoot;
+            const newName = await this.generateCopyName(destDir, item.fileName);
+            const destUri = vscode.Uri.file(path.join(destDir, newName));
+            try {
+                await vscode.workspace.fs.copy(item.resourceUri!, destUri, { overwrite: false });
+                await this.updateOrderOnCreate(destDir, newName);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to duplicate "${item.fileName}": ${error}`);
+            }
+        }
+        this.refresh();
+    }
+
+    copyItems(items: readonly FileItem[]): void {
+        this.clipboard = { uris: items.map(i => i.resourceUri!), isCut: false };
+        vscode.window.setStatusBarMessage(`Copied ${items.length} item(s)`, 1500);
+    }
+
+    cutItems(items: readonly FileItem[]): void {
+        this.clipboard = { uris: items.map(i => i.resourceUri!), isCut: true };
+        vscode.window.setStatusBarMessage(`Cut ${items.length} item(s)`, 1500);
+    }
+
+    async pasteInto(target?: FileItem): Promise<void> {
+        if (!this.clipboard || this.clipboard.uris.length === 0) return;
+        const destFolder = target && target.isDirectory ? target.filePath : (target ? target.parentPath || this.workspaceRoot : this.workspaceRoot);
+        try {
+            for (const src of this.clipboard.uris) {
+                const srcName = path.basename(src.fsPath);
+                const destName = await this.generateNonConflictingName(destFolder, srcName);
+                const destUri = vscode.Uri.file(path.join(destFolder, destName));
+                await vscode.workspace.fs.copy(src, destUri, { overwrite: false });
+                await this.updateOrderOnCreate(destFolder, destName);
+            }
+            if (this.clipboard.isCut) {
+                for (const src of this.clipboard.uris) {
+                    const parent = path.dirname(src.fsPath);
+                    await vscode.workspace.fs.delete(src, { recursive: true, useTrash: false });
+                    await this.updateOrderOnDelete(parent, path.basename(src.fsPath));
+                }
+            }
+            this.clipboard = null;
+            this.refresh();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to paste: ${error}`);
+        }
+    }
+
+    async copyPath(item: FileItem): Promise<void> {
+        await vscode.env.clipboard.writeText(item.filePath);
+        vscode.window.setStatusBarMessage('Path copied to clipboard', 1500);
+    }
+
+    private async generateCopyName(folderPath: string, baseName: string): Promise<string> {
+        const ext = path.extname(baseName);
+        const nameOnly = ext ? baseName.slice(0, -ext.length) : baseName;
+        let counter = 1;
+        while (true) {
+            const candidate = `${nameOnly} copy${counter > 1 ? ' ' + counter : ''}${ext}`;
+            const candidateUri = vscode.Uri.file(path.join(folderPath, candidate));
+            try {
+                await vscode.workspace.fs.stat(candidateUri);
+                counter++;
+            } catch {
+                return candidate;
+            }
+        }
+    }
+
+    private async generateNonConflictingName(folderPath: string, baseName: string): Promise<string> {
+        let name = baseName;
+        let counter = 1;
+        while (true) {
+            const candidateUri = vscode.Uri.file(path.join(folderPath, name));
+            try {
+                await vscode.workspace.fs.stat(candidateUri);
+                const ext = path.extname(baseName);
+                const nameOnly = ext ? baseName.slice(0, -ext.length) : baseName;
+                name = `${nameOnly} (${counter++})${ext}`;
+            } catch {
+                return name;
+            }
+        }
+    }
+
+    private async updateOrderOnCreate(folderPath: string, name: string): Promise<void> {
+        const order = this.configManager.getOrderForFolder(folderPath);
+        if (order && order.length >= 0) {
+            const newOrder = [...order.filter(n => n !== name), name];
+            await this.configManager.setOrderForFolder(folderPath, newOrder);
+        }
+    }
+
+    private async updateOrderOnRename(folderPath: string, oldName: string, newName: string): Promise<void> {
+        const order = this.configManager.getOrderForFolder(folderPath);
+        if (order && order.length > 0) {
+            const newOrder = order.map(n => (n === oldName ? newName : n));
+            await this.configManager.setOrderForFolder(folderPath, newOrder);
+        }
+    }
+
+    private async updateOrderOnDelete(folderPath: string, name: string): Promise<void> {
+        const order = this.configManager.getOrderForFolder(folderPath);
+        if (order && order.length > 0) {
+            const newOrder = order.filter(n => n !== name);
+            await this.configManager.setOrderForFolder(folderPath, newOrder);
+        }
+    }
+}
+
+export class FileTreeDragAndDropController implements vscode.TreeDragAndDropController<FileItem> {
+    dragMimeTypes = ['text/uri-list', 'text/plain'];
+    dropMimeTypes = ['text/uri-list', 'text/plain'];
+    constructor(private provider: CustomFileOrderProvider) {}
+
+    async handleDrag(source: readonly FileItem[], dataTransfer: vscode.DataTransfer, _token: vscode.CancellationToken): Promise<void> {
+        const uris = source.map(s => s.resourceUri!.toString()).join('\n');
+        dataTransfer.set('text/uri-list', new vscode.DataTransferItem(uris));
+    }
+
+    async handleDrop(target: FileItem | undefined, dataTransfer: vscode.DataTransfer, _token: vscode.CancellationToken): Promise<void> {
+        const item = dataTransfer.get('text/uri-list');
+        if (!item) return;
+        const text = await item.asString();
+		const uris = text.split('\n').filter(Boolean).map((s: string) => vscode.Uri.parse(s));
+		const fileItems = uris.map((u: vscode.Uri) => new FileItem(path.basename(u.fsPath), u.fsPath, vscode.TreeItemCollapsibleState.None, false, path.dirname(u.fsPath)));
+        this.provider.copyItems(fileItems);
+        await this.provider.pasteInto(target);
     }
 }
