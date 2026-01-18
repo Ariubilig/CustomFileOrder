@@ -221,19 +221,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
 
 
 
-    private async handleResetOrder(folderItem: FileItem): Promise<void> {
-        const confirmation = await vscode.window.showWarningMessage(
-            `Reset custom order for "${folderItem.fileName}" to default sorting?`,
-            { modal: true },
-            'Reset'
-        );
 
-        if (confirmation === 'Reset') {
-            await this.configManager.resetOrderForFolder(folderItem.filePath);
-            this.refresh();
-            vscode.window.showInformationMessage(`Reset custom order for "${folderItem.fileName}"`);
-        }
-    }
 
     // Template methods
 

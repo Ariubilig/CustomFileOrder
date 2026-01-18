@@ -52,7 +52,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     const resetOrderCommand = vscode.commands.registerCommand('customFileOrder.resetOrder', async (item: any) => {
         const configManager = ConfigManager.getInstance();
-        const targetPath = item.isDirectory ? item.filePath : (item.parentPath || workspaceRoot);
+        // Always usage parentPath to reset the order of the list containing the item
+        // If item is undefined (command palette), default to workspace root
+        const targetPath = item ? (item.parentPath || workspaceRoot) : workspaceRoot;
         
         if (targetPath) {
             await configManager.resetOrderForFolder(targetPath);

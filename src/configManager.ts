@@ -54,7 +54,7 @@ export class ConfigManager {
     }
 
     public async setOrderForFolder(folderPath: string, order: string[], type: 'manual' | 'pattern' = 'manual', patterns?: PatternRule[]): Promise<void> {
-        const rules = this.getOrderRules();
+        const rules = JSON.parse(JSON.stringify(this.getOrderRules()));
         
         // Use relative path if it's a common folder name
         const folderName = folderPath.split(/[\/\\]/).pop() || folderPath;
@@ -72,12 +72,16 @@ export class ConfigManager {
     }
 
     public async resetOrderForFolder(folderPath: string): Promise<void> {
-        const rules = this.getOrderRules();
-        const folderName = folderPath.split(/[\/\\]/).pop() || folderPath;
+        // Clone the rules object to avoid modifying the read-only proxy
+        const rules = JSON.parse(JSON.stringify(this.getOrderRules()));
         
-        // Try both full path and folder name
+        const folderName = folderPath.split(/[\/\\]/).pop() || folderPath;
+        const normalizedPath = folderPath.replace(/\\/g, '/');
+        
+        // Try all possible key variations
         delete rules[folderPath];
         delete rules[folderName];
+        delete rules[normalizedPath];
 
         await this.configuration.update('rules', rules, vscode.ConfigurationTarget.Workspace);
     }
