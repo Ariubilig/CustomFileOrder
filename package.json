@@ -142,7 +142,7 @@
 
         {
           "command": "customFileOrder.resetOrder",
-          "when": "view == customFileOrder && viewItem == folder-custom",
+          "when": "view == customFileOrder && (viewItem == folder || viewItem == folder-custom || viewItem == file)",
           "group": "3_folder@2"
         },
         {
