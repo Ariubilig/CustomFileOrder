@@ -217,54 +217,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         }
     }
 
-    async setCustomOrderForFolder(folderItem: FileItem): Promise<void> {
-        if (!folderItem.isDirectory) {
-            vscode.window.showWarningMessage('Can only set custom order for folders');
-            return;
-        }
-        
-        try {
-            const result = await vscode.window.showQuickPick(
-                [
-                    { 
-                        label: '$(list-ordered) Interactive Reordering', 
-                        description: 'Use move up/down commands to reorder items',
-                        action: 'interactive'
-                    },
-                    { 
-                        label: '$(trash) Reset to Default', 
-                        description: 'Remove custom ordering and use default sort',
-                        action: 'reset'
-                    }
-                ],
-                {
-                    placeHolder: 'How would you like to set the custom order?',
-                    ignoreFocusOut: true
-                }
-            );
 
-            if (!result) return;
-
-            switch (result.action) {
-                case 'reset':
-                    await this.handleResetOrder(folderItem);
-                    break;
-
-                case 'interactive':
-                    vscode.window.showInformationMessage(
-                        'Use right-click "Move Up" or "Move Down" commands to reorder items, or open the Configuration Panel for drag & drop.',
-                        'Open Config Panel'
-                    ).then((selection: string | undefined) => {
-                        if (selection === 'Open Config Panel') {
-                            vscode.commands.executeCommand('customFileOrder.openConfig');
-                        }
-                    });
-                    break;
-            }
-        } catch (error) {
-            vscode.window.showErrorMessage(`Error setting custom order: ${error}`);
-        }
-    }
 
 
 
@@ -506,23 +459,3 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
     }
 }
 
-export class FileTreeDragAndDropController implements vscode.TreeDragAndDropController<FileItem> {
-    dragMimeTypes = ['text/uri-list', 'text/plain'];
-    dropMimeTypes = ['text/uri-list', 'text/plain'];
-    constructor(private provider: CustomFileOrderProvider) {}
-
-    async handleDrag(source: readonly FileItem[], dataTransfer: vscode.DataTransfer, _token: vscode.CancellationToken): Promise<void> {
-        const uris = source.map(s => s.resourceUri!.toString()).join('\n');
-        dataTransfer.set('text/uri-list', new vscode.DataTransferItem(uris));
-    }
-
-    async handleDrop(target: FileItem | undefined, dataTransfer: vscode.DataTransfer, _token: vscode.CancellationToken): Promise<void> {
-        const item = dataTransfer.get('text/uri-list');
-        if (!item) return;
-        const text = await item.asString();
-		const uris = text.split('\n').filter(Boolean).map((s: string) => vscode.Uri.parse(s));
-		const fileItems = uris.map((u: vscode.Uri) => new FileItem(path.basename(u.fsPath), u.fsPath, vscode.TreeItemCollapsibleState.None, false, path.dirname(u.fsPath)));
-        this.provider.copyItems(fileItems);
-        await this.provider.pasteInto(target);
-    }
-}

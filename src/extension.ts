@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { CustomFileOrderProvider, FileTreeDragAndDropController } from './treeProvider';
+import { CustomFileOrderProvider } from './treeProvider';
 import { ConfigManager } from './configManager';
-import { ConfigurationPanel } from './configurationPanel';
+
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Custom File Order extension is now active!');
@@ -14,14 +14,12 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Create tree data provider
     const provider = new CustomFileOrderProvider(workspaceRoot);
-    const dnd = new FileTreeDragAndDropController(provider);
     
     // Register tree data provider
     const treeView = vscode.window.createTreeView('customFileOrder', {
         treeDataProvider: provider,
         showCollapseAll: true,
-        canSelectMany: true,
-        dragAndDropController: dnd
+        canSelectMany: true
     });
     
     provider.setTreeView(treeView);
@@ -50,9 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
         provider.moveItemDown(item);
     });
 
-    const setCustomOrderCommand = vscode.commands.registerCommand('customFileOrder.setCustomOrder', (item: any) => {
-        provider.setCustomOrderForFolder(item);
-    });
+
 
     const resetOrderCommand = vscode.commands.registerCommand('customFileOrder.resetOrder', async (item: any) => {
         const configManager = ConfigManager.getInstance();
@@ -60,9 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
         provider.refresh();
     });
 
-    const openConfigCommand = vscode.commands.registerCommand('customFileOrder.openConfig', () => {
-        ConfigurationPanel.createOrShow(context.extensionUri);
-    });
+
 
     // File operation commands
     const newFileCommand = vscode.commands.registerCommand('customFileOrder.newFile', (item?: any) => {
@@ -123,9 +117,7 @@ export function activate(context: vscode.ExtensionContext) {
         revealInExplorerCommand,
         moveUpCommand,
         moveDownCommand,
-        setCustomOrderCommand,
         resetOrderCommand,
-        openConfigCommand,
         newFileCommand,
         newFolderCommand,
         renameCommand,

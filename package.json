@@ -64,19 +64,12 @@
         "title": "Move Down",
         "icon": "$(arrow-down)"
       },
-      {
-        "command": "customFileOrder.setCustomOrder",
-        "title": "Set Custom Order for This Folder"
-      },
+
       {
         "command": "customFileOrder.resetOrder",
         "title": "Reset to Default Order"
       },
-      {
-        "command": "customFileOrder.openConfig",
-        "title": "Open Configuration Panel",
-        "icon": "$(settings-gear)"
-      },
+
 
       {
         "command": "customFileOrder.newFile",
@@ -121,12 +114,8 @@
           "command": "customFileOrder.refresh",
           "when": "view == customFileOrder",
           "group": "navigation@1"
-        },
-        {
-          "command": "customFileOrder.openConfig",
-          "when": "view == customFileOrder",
-          "group": "navigation@2"
         }
+
 
       ],
       "view/item/context": [
@@ -150,16 +139,7 @@
           "when": "view == customFileOrder",
           "group": "2_reorder@2"
         },
-        {
-          "command": "customFileOrder.setCustomOrder",
-          "when": "view == customFileOrder && viewItem == folder-custom",
-          "group": "3_folder@1"
-        },
-        {
-          "command": "customFileOrder.setCustomOrder",
-          "when": "view == customFileOrder && viewItem == folder",
-          "group": "3_folder@1"
-        },
+
         {
           "command": "customFileOrder.resetOrder",
           "when": "view == customFileOrder && viewItem == folder-custom",
@@ -211,10 +191,7 @@
           "command": "customFileOrder.refresh",
           "when": "workspaceFolderCount > 0"
         },
-        {
-          "command": "customFileOrder.openConfig",
-          "when": "workspaceFolderCount > 0"
-        },
+
         {
           "command": "customFileOrder.openFile",
           "when": "false"
@@ -231,10 +208,7 @@
           "command": "customFileOrder.moveDown",
           "when": "false"
         },
-        {
-          "command": "customFileOrder.setCustomOrder",
-          "when": "false"
-        },
+
         {
           "command": "customFileOrder.resetOrder",
           "when": "false"
