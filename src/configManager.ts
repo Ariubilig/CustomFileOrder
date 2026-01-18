@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { OrderConfiguration, OrderRule, PatternRule, PROJECT_TEMPLATES, ProjectTemplate } from './models/orderRule';
+import { OrderConfiguration, OrderRule, PatternRule } from './models/orderRule';
 import * as path from 'path';
 
 export class ConfigManager {
@@ -69,26 +69,6 @@ export class ConfigManager {
         };
 
         await this.configuration.update('rules', rules, vscode.ConfigurationTarget.Workspace);
-    }
-
-    public async applyTemplate(template: ProjectTemplate): Promise<void> {
-        const rules = this.getOrderRules();
-        
-        // Merge template rules with existing rules
-        for (const [folderPath, templateRule] of Object.entries(template.rules)) {
-            rules[folderPath] = {
-                order: templateRule.order,
-                type: templateRule.patterns ? 'pattern' : 'template',
-                ...(templateRule.patterns && { patterns: templateRule.patterns }),
-                template: template.name
-            };
-        }
-
-        await this.configuration.update('rules', rules, vscode.ConfigurationTarget.Workspace);
-    }
-
-    public getAvailableTemplates(): ProjectTemplate[] {
-        return PROJECT_TEMPLATES;
     }
 
     public async resetOrderForFolder(folderPath: string): Promise<void> {

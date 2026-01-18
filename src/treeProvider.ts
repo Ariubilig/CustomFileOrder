@@ -224,25 +224,12 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         }
         
         try {
-            const children = await this.getChildren(folderItem);
-            const currentOrder = children.map((child: FileItem) => child.fileName);
-            
             const result = await vscode.window.showQuickPick(
                 [
                     { 
                         label: '$(list-ordered) Interactive Reordering', 
                         description: 'Use move up/down commands to reorder items',
                         action: 'interactive'
-                    },
-                    { 
-                        label: '$(edit) Manual Entry', 
-                        description: 'Enter comma-separated list of file/folder names',
-                        action: 'manual'
-                    },
-                    { 
-                        label: '$(template) Apply Template', 
-                        description: 'Apply a predefined ordering template',
-                        action: 'template'
                     },
                     { 
                         label: '$(trash) Reset to Default', 
@@ -259,14 +246,6 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
             if (!result) return;
 
             switch (result.action) {
-                case 'manual':
-                    await this.handleManualEntry(folderItem, currentOrder);
-                    break;
-
-                case 'template':
-                    await this.handleTemplateApplication(folderItem);
-                    break;
-
                 case 'reset':
                     await this.handleResetOrder(folderItem);
                     break;
@@ -287,56 +266,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         }
     }
 
-    private async handleManualEntry(folderItem: FileItem, currentOrder: string[]): Promise<void> {
-        const orderInput = await vscode.window.showInputBox({
-            prompt: 'Enter file/folder names in desired order (comma-separated)',
-            value: currentOrder.join(', '),
-            placeHolder: 'App.jsx, components, hooks, pages',
-            ignoreFocusOut: true,
-            validateInput: (value: string) => {
-                if (!value.trim()) {
-                    return 'Please enter at least one item';
-                }
-                return null;
-            }
-        });
 
-		if (orderInput) {
-			const newOrder = orderInput.split(',').map((s: string) => s.trim()).filter((s: string) => s);
-            await this.configManager.setOrderForFolder(folderItem.filePath, newOrder);
-            this.refresh();
-            vscode.window.showInformationMessage(`Custom order set for "${folderItem.fileName}"`);
-        }
-    }
-
-    private async handleTemplateApplication(folderItem: FileItem): Promise<void> {
-        const templates = this.configManager.getAvailableTemplates();
-        const templateItems = templates.map(template => ({
-            label: `$(file-directory) ${template.name}`,
-            description: template.description,
-            template: template
-        }));
-
-        const selectedTemplate = await vscode.window.showQuickPick(templateItems, {
-            placeHolder: 'Select a template to apply',
-            ignoreFocusOut: true
-        });
-
-        if (selectedTemplate) {
-            const folderName = path.basename(folderItem.filePath);
-            const templateRule = (selectedTemplate.template.rules as any)[folderName] || 
-                                (selectedTemplate.template.rules as any)['.'] ||
-                                (Object.values(selectedTemplate.template.rules as any)[0] as any);
-
-            if (templateRule) {
-                await this.configManager.setOrderForFolder(folderItem.filePath, templateRule.order);
-                this.refresh();
-                vscode.window.showInformationMessage(`Applied template "${selectedTemplate.template.name}" to "${folderItem.fileName}"`);
-            } else {
-                vscode.window.showWarningMessage(`No rule found for folder "${folderName}" in template "${selectedTemplate.template.name}"`);
-            }
-        }
-    }
 
     private async handleResetOrder(folderItem: FileItem): Promise<void> {
         const confirmation = await vscode.window.showWarningMessage(
@@ -353,100 +283,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
     }
 
     // Template methods
-    async applyProjectTemplate(): Promise<void> {
-        try {
-            const templates = this.configManager.getAvailableTemplates();
-            const templateItems = templates.map(template => ({
-                label: `$(file-directory) ${template.name}`,
-                description: template.description,
-                template: template
-            }));
 
-            const selected = await vscode.window.showQuickPick(templateItems, {
-                placeHolder: 'Select a project template to apply',
-                ignoreFocusOut: true
-            });
-
-            if (selected) {
-                const confirmation = await vscode.window.showWarningMessage(
-                    `Apply template "${selected.template.name}"? This will override existing custom orders.`,
-                    { modal: true },
-                    'Apply Template'
-                );
-
-                if (confirmation === 'Apply Template') {
-                    await this.configManager.applyTemplate(selected.template);
-                    this.refresh();
-                    vscode.window.showInformationMessage(`Applied template: ${selected.template.name}`);
-                }
-            }
-        } catch (error) {
-            vscode.window.showErrorMessage(`Error applying template: ${error}`);
-        }
-    }
-
-    async createCustomTemplate(): Promise<void> {
-        try {
-            const templateName = await vscode.window.showInputBox({
-                prompt: 'Enter template name',
-                placeHolder: 'My Custom Template',
-                ignoreFocusOut: true,
-                validateInput: (value) => {
-                    if (!value.trim()) {
-                        return 'Template name is required';
-                    }
-                    if (value.length < 2) {
-                        return 'Template name must be at least 2 characters';
-                    }
-                    return null;
-                }
-            });
-
-            if (!templateName) return;
-
-            const templateDescription = await vscode.window.showInputBox({
-                prompt: 'Enter template description',
-                placeHolder: 'Description of what this template does',
-                ignoreFocusOut: true
-            });
-
-            if (!templateDescription) return;
-
-            // Get current rules as base for template
-            const currentRules = this.configManager.getOrderRules();
-            
-            if (Object.keys(currentRules).length === 0) {
-                vscode.window.showWarningMessage('No custom rules found to create template from. Create some custom orders first.');
-                return;
-            }
-
-            // Convert current rules to template format
-            const templateRules: any = {};
-            for (const [folderPath, rule] of Object.entries(currentRules)) {
-                templateRules[folderPath] = {
-                    order: rule.order,
-                    ...(rule.patterns && { patterns: rule.patterns })
-                };
-            }
-
-            // Save template to workspace settings
-            const config = vscode.workspace.getConfiguration('customFileOrder');
-            const templates = config.get<any[]>('customTemplates', []);
-            
-            templates.push({
-                name: templateName,
-                description: templateDescription,
-                rules: templateRules,
-                created: new Date().toISOString(),
-                author: 'user'
-            });
-
-            await config.update('customTemplates', templates, vscode.ConfigurationTarget.Global);
-            vscode.window.showInformationMessage(`Template "${templateName}" created successfully!`);
-        } catch (error) {
-            vscode.window.showErrorMessage(`Error creating template: ${error}`);
-        }
-    }
 
     // Utility methods
     async revealFileInExplorer(item: FileItem): Promise<void> {
@@ -469,16 +306,14 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
     }
 
     // Get tree statistics
-    getTreeStatistics(): { totalItems: number; customRules: number; templatedFolders: number } {
+    getTreeStatistics(): { totalItems: number; customRules: number } {
         const rules = this.configManager.getOrderRules();
         const totalItems = this.countItemsRecursively(this.workspaceRoot);
         const customRules = Object.keys(rules).length;
-        const templatedFolders = Object.values(rules).filter(rule => rule.type === 'template').length;
 
         return {
             totalItems,
-            customRules,
-            templatedFolders
+            customRules
         };
     }
 
