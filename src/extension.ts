@@ -62,6 +62,18 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    const restoreItemCommand = vscode.commands.registerCommand('customFileOrder.restoreItem', async (item: any) => {
+        if (!item) return;
+        
+        const configManager = ConfigManager.getInstance();
+        const parentPath = item.parentPath || workspaceRoot;
+        
+        if (parentPath) {
+            await configManager.restoreItemToDefault(parentPath, item.fileName);
+            provider.refresh();
+        }
+    });
+
 
 
     // File operation commands

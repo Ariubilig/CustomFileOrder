@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
-import { OrderConfiguration, OrderRule, PatternRule } from './models/orderRule';
+import * as fs from 'fs';
 import * as path from 'path';
+import { OrderConfiguration, OrderRule, PatternRule } from './models/orderRule';
 
 export class ConfigManager {
     private static instance: ConfigManager;
@@ -84,6 +85,82 @@ export class ConfigManager {
         delete rules[normalizedPath];
 
         await this.configuration.update('rules', rules, vscode.ConfigurationTarget.Workspace);
+    }
+
+    public async restoreItemToDefault(folderPath: string, itemName: string): Promise<void> {
+        const rules = JSON.parse(JSON.stringify(this.getOrderRules()));
+        
+        // Find the matching rule key
+        const folderName = folderPath.split(/[\/\\]/).pop() || folderPath;
+        const normalizedPath = folderPath.replace(/\\/g, '/');
+        
+        const key = rules[folderPath] ? folderPath :
+                   rules[folderName] ? folderName :
+                   rules[normalizedPath] ? normalizedPath : null;
+
+        if (key && rules[key]) {
+            const currentOrder = rules[key].order as string[];
+            const defaultFoldersFirst = this.getDefaultFoldersFirst();
+            
+            // Remove the item first
+            const filteredOrder = currentOrder.filter((name: string) => name !== itemName);
+            
+            // Determine if the restored item is a directory
+            const itemPath = path.join(folderPath, itemName);
+            let itemIsDirectory = false;
+            try {
+                itemIsDirectory = fs.statSync(itemPath).isDirectory();
+            } catch (e) {
+                // If checking fails (e.g. file deleted), assume file
+            }
+
+            // Find insertion index
+            let insertIndex = filteredOrder.length;
+            
+            for (let i = 0; i < filteredOrder.length; i++) {
+                const compareName = filteredOrder[i];
+                let compareIsDirectory = false;
+                
+                // Check type of comparison item
+                try {
+                    const comparePath = path.join(folderPath, compareName);
+                    // Use cached knowledge if possible, or check fs
+                    compareIsDirectory = fs.statSync(comparePath).isDirectory();
+                } catch (e) {
+                    // ignore
+                }
+
+                // Sorting Logic
+                let placeBefore = false;
+
+                if (defaultFoldersFirst) {
+                    if (itemIsDirectory && !compareIsDirectory) {
+                        // Item is folder, compare is file -> Item comes first
+                        placeBefore = true;
+                    } else if (!itemIsDirectory && compareIsDirectory) {
+                        // Item is file, compare is folder -> Item comes later
+                        placeBefore = false;
+                    } else {
+                        // Same type -> Alphabetical
+                        placeBefore = itemName.toLowerCase() < compareName.toLowerCase();
+                    }
+                } else {
+                    // correct alphabetical
+                    placeBefore = itemName.toLowerCase() < compareName.toLowerCase();
+                }
+
+                if (placeBefore) {
+                    insertIndex = i;
+                    break;
+                }
+            }
+            
+            // Insert item back at correct position
+            filteredOrder.splice(insertIndex, 0, itemName);
+            rules[key].order = filteredOrder;
+
+            await this.configuration.update('rules', rules, vscode.ConfigurationTarget.Workspace);
+        }
     }
 
     public refresh(): void {

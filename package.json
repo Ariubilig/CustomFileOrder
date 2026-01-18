@@ -69,6 +69,10 @@
         "command": "customFileOrder.resetOrder",
         "title": "Reset to Default Order"
       },
+      {
+        "command": "customFileOrder.restoreItem",
+        "title": "Restore Item Position"
+      },
 
 
       {
@@ -140,6 +144,11 @@
           "group": "2_reorder@2"
         },
 
+        {
+          "command": "customFileOrder.restoreItem",
+          "when": "view == customFileOrder && (viewItem == folder || viewItem == folder-custom || viewItem == file)",
+          "group": "3_folder@3"
+        },
         {
           "command": "customFileOrder.resetOrder",
           "when": "view == customFileOrder && (viewItem == folder || viewItem == folder-custom || viewItem == file)",
