@@ -36,7 +36,7 @@
           "when": "workspaceFolderCount > 0",
           "canMoveViews": true,
           "canSelectMany": true,
-          "icon": "icon.png"
+          "icon": "images/icon.png"
         }
       ]
     },
@@ -298,7 +298,7 @@
     "eslint": "^8.28.0",
     "typescript": "^4.9.4"
   },
-  "icon": "icon.png",
+  "icon": "images/icon.png",
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"
