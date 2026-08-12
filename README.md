@@ -4,6 +4,8 @@ Take control of your file explorer! This lightweight VS Code extension allows yo
 
 Make your important files stand out by moving them to the top, regardless of their alphabetical order.
 
+![Usage](images/usage.gif)
+
 ## Features
 
 - **Manual Ordering**: Right-click any file or folder in the "Custom File Order" view and move it Up or Down.
@@ -24,10 +26,6 @@ Make your important files stand out by moving them to the top, regardless of the
    - To clear a whole folder: Right-click -> **"Reset to Default Order"**.
 
 
-## Usage Showcase
-
-![Custom File Order Demo](image-1.png)
-![Custom File Order Context Menu](image-2.png)
 
 ## License
 
