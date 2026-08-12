@@ -8,8 +8,12 @@ Make your important files stand out by moving them to the top, regardless of the
 
 ## Features
 
-- **Manual Ordering**: Right-click any file or folder in the "Custom File Order" view and move it Up or Down.
-- **Smart Sorting**: Keeps your projects organized exactly how you want them.
+- **Manual Ordering**: Move any file or folder Up or Down, from the context menu or with
+  `Shift+Alt+Up` / `Shift+Alt+Down`.
+- **Multi-Select Moves**: Select several items and they move together as a block, keeping their
+  relative order.
+- **Smart Sorting**: Keeps your projects organized exactly how you want them, with digit-aware
+  names so `file2` sorts before `file10`.
 - **Reset & Restore**:
   - **Restore Item Position**: Reset a single file to its default alphabetical position within your custom list.
   - **Reset to Default Order**: Clear all custom ordering for a folder to revert to standard VS Code sorting.
@@ -30,6 +34,20 @@ Make your important files stand out by moving them to the top, regardless of the
 3. **Resetting**:
    - To fix a single item: Right-click -> **"Restore Item Position"**.
    - To clear a whole folder: Right-click -> **"Reset to Default Order"**.
+
+## Keyboard Shortcuts
+
+These apply while the **Custom File Order** view has focus. Plain arrow keys navigate as usual.
+
+| Shortcut | Action |
+| --- | --- |
+| `Shift+Alt+Up` / `Shift+Alt+Down` | Move the selected item(s) up or down |
+| `F2` | Rename |
+| `Delete` | Delete |
+| `Ctrl+X` / `Ctrl+C` / `Ctrl+V` | Cut / Copy / Paste |
+
+Cut and paste performs a move, so nothing is copied and deleted behind your back. Paste only
+appears once something has been cut or copied.
 
 ### Acting on the workspace root
 
