@@ -11,6 +11,9 @@ const ALLOWED_HIDDEN = ['.vscode', '.env', '.gitignore', '.gitattributes', '.pre
 /** Generated output folders, shown only when explicitly ordered. */
 const GENERATED_FOLDERS = ['dist', 'build', 'out', '.next', '.nuxt'];
 
+/** Drives the `when` clause that hides Paste while the clipboard is empty. */
+const CLIPBOARD_CONTEXT = 'customFileOrder.hasClipboard';
+
 export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<FileItem | undefined | null | void> = new vscode.EventEmitter<FileItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<FileItem | undefined | null | void> = this._onDidChangeTreeData.event;
@@ -266,7 +269,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         if (items.length === 0) {
             return;
         }
-        this.clipboard = { uris: items.map(i => i.resourceUri!), isCut: false };
+        this.setClipboard(items, false);
         vscode.window.setStatusBarMessage(`Copied ${items.length} item(s)`, 1500);
     }
 
@@ -274,7 +277,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         if (items.length === 0) {
             return;
         }
-        this.clipboard = { uris: items.map(i => i.resourceUri!), isCut: true };
+        this.setClipboard(items, true);
         vscode.window.setStatusBarMessage(`Cut ${items.length} item(s)`, 1500);
     }
 
@@ -309,7 +312,7 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
             }
 
             if (isCut) {
-                this.clipboard = null;
+                this.clearClipboard();
             }
             this.refresh();
         } catch (error) {
@@ -320,6 +323,48 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
     async copyPath(item: FileItem): Promise<void> {
         await vscode.env.clipboard.writeText(item.filePath);
         vscode.window.setStatusBarMessage('Path copied to clipboard', 1500);
+    }
+
+    async copyRelativePath(item: FileItem): Promise<void> {
+        const relative = path.relative(this.workspaceRoot, item.filePath);
+        // Anything outside the workspace has no useful relative form.
+        const value = !relative || relative.startsWith('..') ? item.filePath : relative;
+
+        await vscode.env.clipboard.writeText(value);
+        vscode.window.setStatusBarMessage('Relative path copied to clipboard', 1500);
+    }
+
+    async openToSide(item: FileItem): Promise<void> {
+        if (item.isDirectory) {
+            return;
+        }
+
+        try {
+            await vscode.window.showTextDocument(item.resourceUri!, { viewColumn: vscode.ViewColumn.Beside });
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to open file: ${error}`);
+        }
+    }
+
+    /** Opens a terminal in the folder itself, or in a file's parent folder. */
+    async openInTerminal(target?: FileItem): Promise<void> {
+        const folder = this.resolveFolder(target);
+        try {
+            // Prefer the built-in command so the user's terminal profile applies.
+            await vscode.commands.executeCommand('openInIntegratedTerminal', vscode.Uri.file(folder));
+        } catch {
+            vscode.window.createTerminal({ cwd: folder, name: path.basename(folder) }).show();
+        }
+    }
+
+    private setClipboard(items: readonly FileItem[], isCut: boolean): void {
+        this.clipboard = { uris: items.map(item => item.resourceUri!), isCut };
+        void vscode.commands.executeCommand('setContext', CLIPBOARD_CONTEXT, true);
+    }
+
+    private clearClipboard(): void {
+        this.clipboard = null;
+        void vscode.commands.executeCommand('setContext', CLIPBOARD_CONTEXT, false);
     }
 
     /** The folder an action should act on: the item itself, or its parent. */
