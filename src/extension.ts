@@ -2,27 +2,36 @@ import * as vscode from 'vscode';
 import { CustomFileOrderProvider } from './treeProvider';
 import { ConfigManager } from './configManager';
 
+/** Collapses bursts of file system events into a single tree refresh. */
+const REFRESH_DEBOUNCE_MS = 300;
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Custom File Order extension is now active!');
-
     // Get workspace root
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (!workspaceRoot) {
         return;
     }
 
+    const configManager = ConfigManager.getInstance();
+    configManager.setWorkspaceRoot(workspaceRoot);
+
     // Create tree data provider
     const provider = new CustomFileOrderProvider(workspaceRoot);
-    
+
     // Register tree data provider
     const treeView = vscode.window.createTreeView('customFileOrder', {
         treeDataProvider: provider,
         showCollapseAll: true,
         canSelectMany: true
     });
-    
-    provider.setTreeView(treeView);
+
+    /** The items a command should act on: the clicked item, or the selection. */
+    const targets = (item?: any): any[] => {
+        if (treeView.selection.length > 1) {
+            return [...treeView.selection];
+        }
+        return item ? [item] : [...treeView.selection];
+    };
 
     // Register existing commands
     const refreshCommand = vscode.commands.registerCommand('customFileOrder.refresh', () => {
@@ -48,33 +57,21 @@ export function activate(context: vscode.ExtensionContext) {
         provider.moveItemDown(item);
     });
 
-
-
     const resetOrderCommand = vscode.commands.registerCommand('customFileOrder.resetOrder', async (item: any) => {
-        const configManager = ConfigManager.getInstance();
-        // Always usage parentPath to reset the order of the list containing the item
-        // If item is undefined (command palette), default to workspace root
+        // Always use parentPath to reset the list containing the item.
+        // If item is undefined (command palette), default to workspace root.
         const targetPath = item ? (item.parentPath || workspaceRoot) : workspaceRoot;
-        
-        if (targetPath) {
-            await configManager.resetOrderForFolder(targetPath);
-            provider.refresh();
-        }
+
+        await configManager.resetOrderForFolder(targetPath);
+        provider.refresh();
     });
 
     const restoreItemCommand = vscode.commands.registerCommand('customFileOrder.restoreItem', async (item: any) => {
-        if (!item) return;
-        
-        const configManager = ConfigManager.getInstance();
-        const parentPath = item.parentPath || workspaceRoot;
-        
-        if (parentPath) {
-            await configManager.restoreItemToDefault(parentPath, item.fileName);
-            provider.refresh();
+        if (!item) {
+            return;
         }
+        await provider.restoreItemPosition(item);
     });
-
-
 
     // File operation commands
     const newFileCommand = vscode.commands.registerCommand('customFileOrder.newFile', (item?: any) => {
@@ -90,20 +87,16 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
     const deleteCommand = vscode.commands.registerCommand('customFileOrder.delete', async (item?: any) => {
-        const selection = treeView.selection && treeView.selection.length > 1 ? treeView.selection : (item ? [item] : []);
-        await provider.deleteItems(selection as readonly any[]);
+        await provider.deleteItems(targets(item));
     });
     const duplicateCommand = vscode.commands.registerCommand('customFileOrder.duplicate', async (item?: any) => {
-        const selection = treeView.selection && treeView.selection.length > 1 ? treeView.selection : (item ? [item] : []);
-        await provider.duplicateItems(selection as readonly any[]);
+        await provider.duplicateItems(targets(item));
     });
     const copyCommand = vscode.commands.registerCommand('customFileOrder.copy', (item?: any) => {
-        const selection = treeView.selection && treeView.selection.length > 1 ? treeView.selection : (item ? [item] : []);
-        provider.copyItems(selection as readonly any[]);
+        provider.copyItems(targets(item));
     });
     const cutCommand = vscode.commands.registerCommand('customFileOrder.cut', (item?: any) => {
-        const selection = treeView.selection && treeView.selection.length > 1 ? treeView.selection : (item ? [item] : []);
-        provider.cutItems(selection as readonly any[]);
+        provider.cutItems(targets(item));
     });
     const pasteCommand = vscode.commands.registerCommand('customFileOrder.paste', async (item?: any) => {
         await provider.pasteInto(item);
@@ -122,20 +115,42 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Watch for file system changes
-    const fileWatcher = vscode.workspace.createFileSystemWatcher('**/*');
-    fileWatcher.onDidCreate(() => provider.refresh());
-    fileWatcher.onDidDelete(() => provider.refresh());
-    fileWatcher.onDidChange(() => provider.refresh());
+    // Watch for file system changes. Content edits are ignored because they
+    // cannot change the tree, and bursts are debounced into one refresh.
+    let refreshTimer: NodeJS.Timeout | undefined;
+    const scheduleRefresh = () => {
+        if (!configManager.getAutoRefreshEnabled()) {
+            return;
+        }
+        if (refreshTimer) {
+            clearTimeout(refreshTimer);
+        }
+        refreshTimer = setTimeout(() => {
+            refreshTimer = undefined;
+            provider.refresh();
+        }, REFRESH_DEBOUNCE_MS);
+    };
+
+    const fileWatcher = vscode.workspace.createFileSystemWatcher('**/*', false, true, false);
+    fileWatcher.onDidCreate(scheduleRefresh);
+    fileWatcher.onDidDelete(scheduleRefresh);
+
+    const pendingRefresh = new vscode.Disposable(() => {
+        if (refreshTimer) {
+            clearTimeout(refreshTimer);
+        }
+    });
 
     // Add to subscriptions
     context.subscriptions.push(
+        treeView,
         refreshCommand,
         openFileCommand,
         revealInExplorerCommand,
         moveUpCommand,
         moveDownCommand,
         resetOrderCommand,
+        restoreItemCommand,
         newFileCommand,
         newFolderCommand,
         renameCommand,
@@ -146,8 +161,17 @@ export function activate(context: vscode.ExtensionContext) {
         pasteCommand,
         copyPathCommand,
         configWatcher,
-        fileWatcher
+        fileWatcher,
+        pendingRefresh
     );
+
+    // Rules written by older versions were keyed by absolute path, which only
+    // ever matched on the machine they were created on.
+    void configManager.migrateLegacyRules().then(changed => {
+        if (changed) {
+            provider.refresh();
+        }
+    });
 }
 
 export function deactivate() {}
