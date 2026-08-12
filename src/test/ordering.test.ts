@@ -6,6 +6,7 @@ import {
     keyForFolder,
     matchesPattern,
     migrateRules,
+    moveSelection,
     restoreToDefaultPosition,
     SortableEntry
 } from '../ordering';
@@ -87,6 +88,45 @@ suite('applyOrder', () => {
         const input = [...entries];
         applyOrder(input, ['zebra.ts'], true);
         assert.deepStrictEqual(names(input), ['zebra.ts', 'alpha.ts', 'lib']);
+    });
+});
+
+suite('moveSelection', () => {
+    const order = ['a', 'b', 'c', 'd'];
+    const move = (selected: string[], offset: -1 | 1) => moveSelection(order, new Set(selected), offset);
+
+    test('moves a single entry up', () => {
+        assert.deepStrictEqual(move(['c'], -1), ['a', 'c', 'b', 'd']);
+    });
+
+    test('moves a single entry down', () => {
+        assert.deepStrictEqual(move(['b'], 1), ['a', 'c', 'b', 'd']);
+    });
+
+    test('moves an adjacent selection as one block', () => {
+        assert.deepStrictEqual(move(['b', 'c'], -1), ['b', 'c', 'a', 'd']);
+        assert.deepStrictEqual(move(['a', 'b'], 1), ['c', 'a', 'b', 'd']);
+    });
+
+    test('keeps a split selection in relative order', () => {
+        assert.deepStrictEqual(move(['b', 'd'], -1), ['b', 'a', 'd', 'c']);
+    });
+
+    test('holds entries at the edge while the rest still move', () => {
+        assert.deepStrictEqual(move(['a', 'c'], -1), ['a', 'c', 'b', 'd']);
+        assert.deepStrictEqual(move(['b', 'd'], 1), ['a', 'c', 'b', 'd']);
+    });
+
+    test('returns null when nothing can move', () => {
+        assert.strictEqual(move(['a'], -1), null);
+        assert.strictEqual(move(['d'], 1), null);
+        assert.strictEqual(move(['a', 'b'], -1), null);
+        assert.strictEqual(move([], 1), null);
+    });
+
+    test('does not mutate the input', () => {
+        move(['a', 'b'], 1);
+        assert.deepStrictEqual(order, ['a', 'b', 'c', 'd']);
     });
 });
 

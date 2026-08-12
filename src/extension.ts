@@ -48,13 +48,14 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Register new commands
-    const moveUpCommand = vscode.commands.registerCommand('customFileOrder.moveUp', (item: any) => {
-        provider.moveItemUp(item);
+    // Register new commands. A keyboard shortcut passes no item, so these fall
+    // back to the view's selection via targets().
+    const moveUpCommand = vscode.commands.registerCommand('customFileOrder.moveUp', async (item?: any) => {
+        await provider.moveItems(targets(item), -1);
     });
 
-    const moveDownCommand = vscode.commands.registerCommand('customFileOrder.moveDown', (item: any) => {
-        provider.moveItemDown(item);
+    const moveDownCommand = vscode.commands.registerCommand('customFileOrder.moveDown', async (item?: any) => {
+        await provider.moveItems(targets(item), 1);
     });
 
     const resetOrderCommand = vscode.commands.registerCommand('customFileOrder.resetOrder', async (item: any) => {

@@ -22,7 +22,10 @@ Make your important files stand out by moving them to the top, regardless of the
 
 1. **Open the View**: Look for the **"Custom File Order"** view in the Explorer sidebar.
 2. **Reorder**:
-   - Right-click any item and select **"Move Up"** or **"Move Down"**.
+   - Press `Shift+Alt+Up` / `Shift+Alt+Down`, or right-click any item and select
+     **"Move Up"** or **"Move Down"**.
+   - Select several items first and they move together as a block, keeping their relative
+     order. Only items in the same folder move against each other.
    - The folder will automatically switch to "Custom Order" mode.
 3. **Resetting**:
    - To fix a single item: Right-click -> **"Restore Item Position"**.
