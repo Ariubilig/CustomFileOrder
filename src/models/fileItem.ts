@@ -12,7 +12,10 @@ export class FileItem extends vscode.TreeItem {
         public readonly parentPath?: string
     ) {
         super(label, collapsibleState);
-        
+
+        // A stable id lets VS Code keep selection and expansion across refreshes,
+        // so a reordered item stays selected for the next keystroke.
+        this.id = this.filePath;
         this.tooltip = this.filePath;
         this.resourceUri = vscode.Uri.file(this.filePath);
         

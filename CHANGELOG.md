@@ -4,6 +4,24 @@ All notable changes to the "custom-file-order" extension will be documented in t
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.3.0]
+
+### Added
+
+- **`Shift+Alt+Up` / `Shift+Alt+Down` reorder the selected items** while the view has focus.
+  Plain arrow keys still navigate as before.
+- **Reordering works on a multi-selection.** Selected items move as one block and keep their
+  relative order; anything already against the top or bottom holds while the rest keep moving,
+  the way moving lines works in the editor. Items are only reordered against siblings in the
+  same folder.
+- Tree items now carry a stable id, so selection and expansion survive a refresh and a moved
+  item stays selected for the next keystroke.
+
+### Changed
+
+- Move feedback goes to the status bar rather than a notification, since the shortcut can
+  repeat quickly.
+
 ## [1.2.0]
 
 ### Added

@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { FileItem } from './models/fileItem';
 import { ConfigManager } from './configManager';
-import { applyOrder, restoreToDefaultPosition } from './ordering';
+import { applyOrder, moveSelection, restoreToDefaultPosition } from './ordering';
 
 /** Dot-entries worth showing; everything else starting with `.` stays hidden. */
 const ALLOWED_HIDDEN = ['.vscode', '.env', '.gitignore', '.gitattributes', '.prettierrc', '.eslintrc'];
@@ -98,45 +98,46 @@ export class CustomFileOrderProvider implements vscode.TreeDataProvider<FileItem
         return true;
     }
 
-    // Reordering methods
-    async moveItemUp(item: FileItem): Promise<void> {
-        await this.moveItem(item, -1);
-    }
+    /**
+     * Shift the given items one position up or down within their folder. A
+     * multi-selection moves as a block; feedback goes to the status bar because
+     * these run from a held keyboard shortcut.
+     */
+    async moveItems(items: readonly FileItem[], offset: -1 | 1): Promise<void> {
+        if (items.length === 0) {
+            return;
+        }
 
-    async moveItemDown(item: FileItem): Promise<void> {
-        await this.moveItem(item, 1);
-    }
-
-    private async moveItem(item: FileItem, offset: number): Promise<void> {
-        if (!item?.parentPath) {
+        const parentPath = items[0].parentPath;
+        if (!parentPath) {
             vscode.window.showWarningMessage('Cannot move root level items');
             return;
         }
 
+        // Only items sharing a folder can be reordered against each other.
+        const moving = items.filter((item: FileItem) => item.parentPath === parentPath);
+
         try {
-            const siblings = this.getFilesAndFolders(item.parentPath);
-            const currentIndex = siblings.findIndex((sibling: FileItem) => sibling.fileName === item.fileName);
-            if (currentIndex === -1) {
+            const siblings = this.getFilesAndFolders(parentPath);
+            const newOrder = moveSelection(
+                siblings.map((sibling: FileItem) => sibling.fileName),
+                new Set(moving.map((item: FileItem) => item.fileName)),
+                offset
+            );
+
+            if (!newOrder) {
+                vscode.window.setStatusBarMessage(
+                    offset < 0 ? 'Already at the top' : 'Already at the bottom',
+                    1500
+                );
                 return;
             }
 
-            const targetIndex = currentIndex + offset;
-            if (targetIndex < 0) {
-                vscode.window.showInformationMessage('Item is already at the top');
-                return;
-            }
-            if (targetIndex >= siblings.length) {
-                vscode.window.showInformationMessage('Item is already at the bottom');
-                return;
-            }
-
-            const newOrder = siblings.map((sibling: FileItem) => sibling.fileName);
-            [newOrder[currentIndex], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[currentIndex]];
-
-            await this.configManager.setOrderForFolder(item.parentPath, newOrder);
+            await this.configManager.setOrderForFolder(parentPath, newOrder);
             this.refresh();
 
-            vscode.window.showInformationMessage(`Moved "${item.fileName}" ${offset < 0 ? 'up' : 'down'}`);
+            const label = moving.length === 1 ? `"${moving[0].fileName}"` : `${moving.length} items`;
+            vscode.window.setStatusBarMessage(`Moved ${label} ${offset < 0 ? 'up' : 'down'}`, 1500);
         } catch (error) {
             vscode.window.showErrorMessage(`Error moving item: ${error}`);
         }

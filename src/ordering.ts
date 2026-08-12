@@ -122,6 +122,39 @@ export function applyOrder<T extends SortableEntry>(
 }
 
 /**
+ * Shift every selected name one position up (`offset` -1) or down (`offset` 1),
+ * keeping the selection's relative order. Names already against the edge stay
+ * put while the rest still move, the way moving lines works in the editor.
+ * Returns null when nothing could move.
+ */
+export function moveSelection(
+    order: readonly string[],
+    selected: ReadonlySet<string>,
+    offset: -1 | 1
+): string[] | null {
+    const result = [...order];
+    let moved = false;
+
+    if (offset < 0) {
+        for (let i = 0; i < result.length; i++) {
+            if (selected.has(result[i]) && i > 0 && !selected.has(result[i - 1])) {
+                [result[i - 1], result[i]] = [result[i], result[i - 1]];
+                moved = true;
+            }
+        }
+    } else {
+        for (let i = result.length - 1; i >= 0; i--) {
+            if (selected.has(result[i]) && i < result.length - 1 && !selected.has(result[i + 1])) {
+                [result[i + 1], result[i]] = [result[i], result[i + 1]];
+                moved = true;
+            }
+        }
+    }
+
+    return moved ? result : null;
+}
+
+/**
  * Move a single entry back to where default sorting would have put it, leaving
  * the rest of the custom order untouched.
  */
