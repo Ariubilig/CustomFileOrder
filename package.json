@@ -2,7 +2,7 @@
   "name": "custom-file-order",
   "displayName": "Custom File Order",
   "description": "Custom file and folder ordering in explorer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "RARI",
   "repository": {
     "type": "git",
@@ -176,7 +176,7 @@
         },
         {
           "command": "customFileOrder.duplicate",
-          "when": "view == customFileOrder && viewItem == file",
+          "when": "view == customFileOrder && (viewItem == file || viewItem == folder || viewItem == folder-custom)",
           "group": "4_fs@5"
         },
         {
@@ -221,6 +221,38 @@
         {
           "command": "customFileOrder.resetOrder",
           "when": "false"
+        },
+        {
+          "command": "customFileOrder.restoreItem",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.rename",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.delete",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.duplicate",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.copy",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.cut",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.paste",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.copyPath",
+          "when": "false"
         }
       ]
     },
@@ -231,7 +263,7 @@
           "type": "object",
           "default": {},
           "description": "Custom ordering rules for files and folders",
-          "markdownDescription": "Define custom ordering rules for specific folders. Example:\n```json\n{\n  \"src\": {\n    \"order\": [\"App.jsx\", \"components\", \"hooks\", \"pages\"],\n    \"type\": \"manual\"\n  }\n}\n```"
+          "markdownDescription": "Define custom ordering rules for specific folders. Each key is a folder path relative to the workspace root, using `/` separators, or `.` for the root itself. Entries may be exact names or globs such as `*.css`. Example:\n```json\n{\n  \".\": {\n    \"order\": [\"package.json\", \"README.md\", \"src\"]\n  },\n  \"src/components\": {\n    \"order\": [\"index.ts\", \"*.tsx\", \"*.css\"]\n  }\n}\n```"
         },
         "customFileOrder.enableAutoRefresh": {
           "type": "boolean",
@@ -249,42 +281,42 @@
           "description": "Show folders before files when no custom order is set"
         }
       }
-    }
+    },
+    "keybindings": [
+      {
+        "command": "customFileOrder.rename",
+        "key": "f2",
+        "when": "focusedView == customFileOrder"
+      },
+      {
+        "command": "customFileOrder.delete",
+        "key": "delete",
+        "when": "focusedView == customFileOrder"
+      },
+      {
+        "command": "customFileOrder.copy",
+        "key": "ctrl+c",
+        "when": "focusedView == customFileOrder"
+      },
+      {
+        "command": "customFileOrder.cut",
+        "key": "ctrl+x",
+        "when": "focusedView == customFileOrder"
+      },
+      {
+        "command": "customFileOrder.paste",
+        "key": "ctrl+v",
+        "when": "focusedView == customFileOrder"
+      }
+    ]
   },
-  "keybindings": [
-    {
-      "command": "customFileOrder.rename",
-      "key": "f2",
-      "when": "view == customFileOrder && viewItem"
-    },
-    {
-      "command": "customFileOrder.delete",
-      "key": "delete",
-      "when": "view == customFileOrder && viewItem"
-    },
-    {
-      "command": "customFileOrder.copy",
-      "key": "ctrl+c",
-      "when": "view == customFileOrder"
-    },
-    {
-      "command": "customFileOrder.cut",
-      "key": "ctrl+x",
-      "when": "view == customFileOrder"
-    },
-    {
-      "command": "customFileOrder.paste",
-      "key": "ctrl+v",
-      "when": "view == customFileOrder"
-    }
-  ],
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js",
+    "test": "vscode-test",
     "package": "vsce package",
     "publish": "vsce publish"
   },
@@ -294,6 +326,7 @@
     "@types/vscode": "^1.74.0",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.2.0",
     "eslint": "^8.28.0",
     "typescript": "^4.9.4"
