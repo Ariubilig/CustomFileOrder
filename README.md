@@ -14,6 +14,9 @@ Make your important files stand out by moving them to the top, regardless of the
   - **Restore Item Position**: Reset a single file to its default alphabetical position within your custom list.
   - **Reset to Default Order**: Clear all custom ordering for a folder to revert to standard VS Code sorting.
 - **Folder Rules**: Global "Folders First" support to match your VS Code settings.
+- **Familiar Context Menu**: New File, New Folder, Open to the Side, Reveal in File Explorer,
+  Open in Integrated Terminal, Cut/Copy/Paste, Copy Path, Copy Relative Path, Rename, Duplicate
+  and Delete — on both files and folders, like the built-in Explorer.
 
 ## Usage
 
@@ -24,6 +27,15 @@ Make your important files stand out by moving them to the top, regardless of the
 3. **Resetting**:
    - To fix a single item: Right-click -> **"Restore Item Position"**.
    - To clear a whole folder: Right-click -> **"Reset to Default Order"**.
+
+### Acting on the workspace root
+
+VS Code does not let extensions add a menu to the blank area below a view's items
+([microsoft/vscode#188259](https://github.com/microsoft/vscode/issues/188259)), so right-clicking
+empty space cannot work the way it does in the built-in Explorer. The same actions live in the
+view's toolbar instead: **New File** and **New Folder** are icons in the view header, and
+**Open in Integrated Terminal** and **Paste** are in its `...` menu. All four act on the
+workspace root.
 
 ## Configuration
 

@@ -107,6 +107,22 @@ export function activate(context: vscode.ExtensionContext) {
             await provider.copyPath(target);
         }
     });
+    const copyRelativePathCommand = vscode.commands.registerCommand('customFileOrder.copyRelativePath', async (item?: any) => {
+        const target = item ?? treeView.selection[0];
+        if (target) {
+            await provider.copyRelativePath(target);
+        }
+    });
+    const openToSideCommand = vscode.commands.registerCommand('customFileOrder.openToSide', async (item?: any) => {
+        const target = item ?? treeView.selection[0];
+        if (target) {
+            await provider.openToSide(target);
+        }
+    });
+    const openInTerminalCommand = vscode.commands.registerCommand('customFileOrder.openInTerminal', async (item?: any) => {
+        // No item means the view title menu, which acts on the workspace root.
+        await provider.openInTerminal(item);
+    });
 
     // Watch for configuration changes
     const configWatcher = vscode.workspace.onDidChangeConfiguration((e: vscode.ConfigurationChangeEvent) => {
@@ -160,6 +176,9 @@ export function activate(context: vscode.ExtensionContext) {
         cutCommand,
         pasteCommand,
         copyPathCommand,
+        copyRelativePathCommand,
+        openToSideCommand,
+        openInTerminalCommand,
         configWatcher,
         fileWatcher,
         pendingRefresh

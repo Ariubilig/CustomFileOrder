@@ -2,7 +2,7 @@
   "name": "custom-file-order",
   "displayName": "Custom File Order",
   "description": "Custom file and folder ordering in explorer",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "RARI",
   "repository": {
     "type": "git",
@@ -64,7 +64,6 @@
         "title": "Move Down",
         "icon": "$(arrow-down)"
       },
-
       {
         "command": "customFileOrder.resetOrder",
         "title": "Reset to Default Order"
@@ -73,15 +72,27 @@
         "command": "customFileOrder.restoreItem",
         "title": "Restore Item Position"
       },
-
-
       {
         "command": "customFileOrder.newFile",
-        "title": "New File"
+        "title": "New File",
+        "icon": "$(new-file)"
       },
       {
         "command": "customFileOrder.newFolder",
-        "title": "New Folder"
+        "title": "New Folder",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "customFileOrder.openToSide",
+        "title": "Open to the Side"
+      },
+      {
+        "command": "customFileOrder.openInTerminal",
+        "title": "Open in Integrated Terminal"
+      },
+      {
+        "command": "customFileOrder.copyRelativePath",
+        "title": "Copy Relative Path"
       },
       {
         "command": "customFileOrder.rename",
@@ -115,84 +126,116 @@
     "menus": {
       "view/title": [
         {
-          "command": "customFileOrder.refresh",
+          "command": "customFileOrder.newFile",
           "when": "view == customFileOrder",
           "group": "navigation@1"
+        },
+        {
+          "command": "customFileOrder.newFolder",
+          "when": "view == customFileOrder",
+          "group": "navigation@2"
+        },
+        {
+          "command": "customFileOrder.refresh",
+          "when": "view == customFileOrder",
+          "group": "navigation@3"
+        },
+        {
+          "command": "customFileOrder.openInTerminal",
+          "when": "view == customFileOrder",
+          "group": "1_workspace@1"
+        },
+        {
+          "command": "customFileOrder.paste",
+          "when": "view == customFileOrder && customFileOrder.hasClipboard",
+          "group": "1_workspace@2"
         }
-
-
       ],
       "view/item/context": [
         {
-          "command": "customFileOrder.revealInExplorer",
+          "command": "customFileOrder.newFile",
           "when": "view == customFileOrder",
-          "group": "1_actions@1"
+          "group": "1_new@1"
         },
         {
-          "command": "customFileOrder.copyPath",
+          "command": "customFileOrder.newFolder",
           "when": "view == customFileOrder",
-          "group": "1_actions@2"
+          "group": "1_new@2"
+        },
+        {
+          "command": "customFileOrder.openToSide",
+          "when": "view == customFileOrder && viewItem == file",
+          "group": "2_open@1"
+        },
+        {
+          "command": "customFileOrder.revealInExplorer",
+          "when": "view == customFileOrder",
+          "group": "2_open@2"
+        },
+        {
+          "command": "customFileOrder.openInTerminal",
+          "when": "view == customFileOrder",
+          "group": "2_open@3"
         },
         {
           "command": "customFileOrder.moveUp",
           "when": "view == customFileOrder",
-          "group": "2_reorder@1"
+          "group": "3_reorder@1"
         },
         {
           "command": "customFileOrder.moveDown",
           "when": "view == customFileOrder",
-          "group": "2_reorder@2"
+          "group": "3_reorder@2"
         },
-
         {
           "command": "customFileOrder.restoreItem",
-          "when": "view == customFileOrder && (viewItem == folder || viewItem == folder-custom || viewItem == file)",
-          "group": "3_folder@3"
+          "when": "view == customFileOrder",
+          "group": "3_reorder@3"
         },
         {
           "command": "customFileOrder.resetOrder",
-          "when": "view == customFileOrder && (viewItem == folder || viewItem == folder-custom || viewItem == file)",
-          "group": "3_folder@2"
-        },
-        {
-          "command": "customFileOrder.newFile",
-          "when": "view == customFileOrder && (viewItem == folder || viewItem == folder-custom)",
-          "group": "4_fs@1"
-        },
-        {
-          "command": "customFileOrder.newFolder",
-          "when": "view == customFileOrder && (viewItem == folder || viewItem == folder-custom)",
-          "group": "4_fs@2"
-        },
-        {
-          "command": "customFileOrder.rename",
           "when": "view == customFileOrder",
-          "group": "4_fs@3"
-        },
-        {
-          "command": "customFileOrder.delete",
-          "when": "view == customFileOrder",
-          "group": "4_fs@4"
-        },
-        {
-          "command": "customFileOrder.duplicate",
-          "when": "view == customFileOrder && (viewItem == file || viewItem == folder || viewItem == folder-custom)",
-          "group": "4_fs@5"
-        },
-        {
-          "command": "customFileOrder.copy",
-          "when": "view == customFileOrder",
-          "group": "5_clip@1"
+          "group": "3_reorder@4"
         },
         {
           "command": "customFileOrder.cut",
           "when": "view == customFileOrder",
-          "group": "5_clip@2"
+          "group": "4_clip@1"
+        },
+        {
+          "command": "customFileOrder.copy",
+          "when": "view == customFileOrder",
+          "group": "4_clip@2"
         },
         {
           "command": "customFileOrder.paste",
-          "when": "view == customFileOrder && (viewItem == folder || viewItem == folder-custom)",
-          "group": "5_clip@3"
+          "when": "view == customFileOrder && customFileOrder.hasClipboard",
+          "group": "4_clip@3"
+        },
+        {
+          "command": "customFileOrder.copyPath",
+          "when": "view == customFileOrder",
+          "group": "5_path@1"
+        },
+        {
+          "command": "customFileOrder.copyRelativePath",
+          "when": "view == customFileOrder",
+          "group": "5_path@2"
+        },
+        {
+          "command": "customFileOrder.rename",
+          "when": "view == customFileOrder",
+          "group": "6_modify@1"
+        },
+        {
+          "command": "customFileOrder.duplicate",
+          "when": "view == customFileOrder",
+          "group": "6_modify@2"
+        },
+        {
+          "command": "customFileOrder.delete",
+          "when": "view == customFileOrder",
+          "group": "6_modify@3"
         }
       ],
       "commandPalette": [
@@ -200,7 +243,6 @@
           "command": "customFileOrder.refresh",
           "when": "workspaceFolderCount > 0"
         },
-
         {
           "command": "customFileOrder.openFile",
           "when": "false"
@@ -217,7 +259,6 @@
           "command": "customFileOrder.moveDown",
           "when": "false"
         },
-
         {
           "command": "customFileOrder.resetOrder",
           "when": "false"
@@ -252,6 +293,14 @@
         },
         {
           "command": "customFileOrder.copyPath",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.copyRelativePath",
+          "when": "false"
+        },
+        {
+          "command": "customFileOrder.openToSide",
           "when": "false"
         }
       ]

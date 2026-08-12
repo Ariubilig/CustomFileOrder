@@ -4,6 +4,20 @@ All notable changes to the "custom-file-order" extension will be documented in t
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.2.0]
+
+### Added
+
+- **Explorer-style context menu.** New File and New Folder now appear on files as well as
+  folders (creating siblings, as the built-in Explorer does), joined by Open to the Side,
+  Open in Integrated Terminal and Copy Relative Path. Entries are grouped in the same order
+  the Explorer uses.
+- New File, New Folder and Refresh are now icons in the view's toolbar, with Open in
+  Integrated Terminal and Paste in its `...` menu. These act on the workspace root, standing in
+  for the empty-space menu that VS Code does not let extensions contribute
+  ([microsoft/vscode#188259](https://github.com/microsoft/vscode/issues/188259)).
+- Paste is hidden until something has been cut or copied.
+
 ## [1.1.0]
 
 ### Changed
